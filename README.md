@@ -132,6 +132,7 @@ Usage:
   emcee [spec-path-or-url] [flags]
 
 Flags:
+      --baseUrl string       Override base URL for API calls (overrides servers field in OpenAPI spec)
       --basic-auth string    Basic auth value (either user:pass or base64 encoded, will be prefixed with 'Basic ')
       --bearer-auth string   Bearer token value (will be prefixed with 'Bearer ')
   -h, --help                 help for emcee

@@ -26,11 +26,17 @@ type RegisterToolsOption func(*registerToolsConfig)
 
 type registerToolsConfig struct {
 	enableAnnotations bool
+	baseURL           string
 }
 
 // WithoutAnnotations disables attaching REST-aware MCP ToolAnnotations for generated tools.
 func WithoutAnnotations() RegisterToolsOption {
 	return func(cfg *registerToolsConfig) { cfg.enableAnnotations = false }
+}
+
+// WithBaseURL overrides the base URL for API calls instead of using the servers field from the OpenAPI spec.
+func WithBaseURL(url string) RegisterToolsOption {
+	return func(cfg *registerToolsConfig) { cfg.baseURL = url }
 }
 
 // RegisterTools parses the given OpenAPI specification and registers tools on the provided MCP server.
@@ -64,10 +70,15 @@ func RegisterTools(server *mcp.Server, specData []byte, client *http.Client, opt
 		return fmt.Errorf("error building OpenAPI model: %v", errs[0])
 	}
 
-	if len(model.Model.Servers) == 0 || model.Model.Servers[0].URL == "" {
-		return fmt.Errorf("OpenAPI spec must include at least one server URL")
+	var baseURL string
+	if cfg.baseURL != "" {
+		baseURL = strings.TrimSuffix(cfg.baseURL, "/")
+	} else {
+		if len(model.Model.Servers) == 0 || model.Model.Servers[0].URL == "" {
+			return fmt.Errorf("OpenAPI spec must include at least one server URL")
+		}
+		baseURL = strings.TrimSuffix(model.Model.Servers[0].URL, "/")
 	}
-	baseURL := strings.TrimSuffix(model.Model.Servers[0].URL, "/")
 
 	// Iterate operations and register tools.
 	if model.Model.Paths == nil || model.Model.Paths.PathItems == nil {
